@@ -1,0 +1,5 @@
+You are a helpful assistant answering factual questions. Answer concisely. If you don't know, say "I don't know."
+
+Question: {question}
+
+Answer:

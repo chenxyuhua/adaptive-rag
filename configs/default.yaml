@@ -1,0 +1,49 @@
+# Default configuration for adaptive-rag baselines.
+# Override per-run with --config and CLI flags.
+
+llm:
+  provider: gemini
+  model: gemini-2.0-flash
+  temperature: 0.0
+  max_output_tokens: 256
+  # Free-tier rate limit guard. Gemini 2.0 Flash free tier is ~15 RPM.
+  requests_per_minute: 12
+
+embedder:
+  model: BAAI/bge-small-en-v1.5
+  batch_size: 64
+  # Whether to prepend "query: " / "passage: " markers — keep false for bge.
+  use_e5_prefix: false
+
+retriever:
+  index_path: data/index/wiki_subset.faiss
+  passages_path: data/index/wiki_subset.jsonl
+  top_k: 5
+
+corpus:
+  # Subset size for the dev build. Bump up once the pipeline is verified.
+  source: wiki_dpr
+  num_passages: 200000
+  passage_chars: 600
+
+datasets:
+  nq:
+    hf_name: nq_open
+    split: validation
+  triviaqa:
+    hf_name: trivia_qa
+    hf_config: rc.nocontext
+    split: validation
+  hotpotqa:
+    hf_name: hotpot_qa
+    hf_config: distractor
+    split: validation
+
+run:
+  dev_sample_size: 200
+  seed: 42
+  output_root: runs
+
+prompts:
+  no_retrieval: prompts/no_retrieval.txt
+  with_retrieval: prompts/with_retrieval.txt
