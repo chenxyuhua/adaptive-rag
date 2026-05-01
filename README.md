@@ -65,7 +65,7 @@ Every run writes one JSONL line per query with this schema. Evaluation/analysis 
 - [x] Dataset loaders (NQ, TriviaQA, HotpotQA)
 - [x] FAISS retriever + Colab corpus build notebook
 - [x] Gemini LLM client
-- [ ] Baseline strategies + pipeline runner
-- [ ] EM/F1 eval stubs + prediction loader
-- [ ] CLI scripts + smoke tests
+- [x] Baseline strategies + pipeline runner
+- [x] EM/F1 eval stubs + prediction loader
+- [x] CLI scripts
 - [ ] Baseline runs (200/dataset, 3 strategies)
