@@ -3,11 +3,11 @@
 
 llm:
   provider: gemini
-  model: gemini-2.0-flash
+  model: gemini-2.5-flash
   temperature: 0.0
   max_output_tokens: 256
-  # Free-tier rate limit guard. Gemini 2.0 Flash free tier is ~15 RPM.
-  requests_per_minute: 12
+  # Free-tier limit on gemini-2.5-flash is 5 RPM. Stay below to leave headroom for retries.
+  requests_per_minute: 4
 
 embedder:
   model: BAAI/bge-small-en-v1.5
