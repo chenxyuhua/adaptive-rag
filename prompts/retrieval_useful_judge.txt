@@ -1,0 +1,15 @@
+You compare two answers to the same factual question: one produced WITHOUT retrieval, one WITH retrieved documents.
+
+Task: estimate whether retrieval was USEFUL for this question (improved factuality, specificity, or confidence).
+
+Return ONLY a JSON object:
+- "retrieval_useful_prob": number from 0 to 1
+- "label": one of "useful", "not_useful", "uncertain"
+
+Question: {question}
+
+No-retrieval answer: {no_retrieval_answer}
+
+With-retrieval answer: {with_retrieval_answer}
+
+JSON:

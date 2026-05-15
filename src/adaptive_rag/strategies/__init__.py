@@ -1,3 +1,9 @@
+from ..decision import (
+    ReflectOutcome,
+    RetrievalDecider,
+    build_decider,
+    maybe_wrap_reflection,
+)
 from .adaptive import AdaptiveStrategy
 from .base import Strategy
 from .fixed_k import FixedKRetrievalStrategy
@@ -8,4 +14,8 @@ __all__ = [
     "NoRetrievalStrategy",
     "FixedKRetrievalStrategy",
     "AdaptiveStrategy",
+    "RetrievalDecider",
+    "ReflectOutcome",
+    "build_decider",
+    "maybe_wrap_reflection",
 ]

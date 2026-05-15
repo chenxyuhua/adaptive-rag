@@ -47,3 +47,18 @@ run:
 prompts:
   no_retrieval: prompts/no_retrieval.txt
   with_retrieval: prompts/with_retrieval.txt
+  retrieve_decision: prompts/retrieve_decision.txt
+  reflect_critique: prompts/reflect_critique.txt
+  retrieval_useful_judge: prompts/retrieval_useful_judge.txt
+
+# Adaptive retrieval (Mahika slice): deciders, thresholding, reflection, counterfactual logging.
+adaptive:
+  decider_kind: prompt
+  decider: {}
+  decision_threshold: 0.5
+  apply_decision_threshold: true
+  enable_reflection: false
+  reflection: {}
+  shadow_retrieval_for_log: false
+  counterfactual_judge: heuristic
+  counterfactual_prompt_path: prompts/retrieval_useful_judge.txt

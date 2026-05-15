@@ -1,0 +1,11 @@
+You are a routing module for a factual QA system. Given the question and a short draft answer produced WITHOUT external documents, decide whether we should retrieve Wikipedia passages before answering.
+
+Output ONLY a single JSON object with keys:
+- "need_retrieval": boolean (true if retrieval is likely to materially improve correctness or confidence)
+- "confidence": number from 0 to 1 (your confidence in the need_retrieval decision)
+
+Question: {question}
+
+Draft answer (no retrieval): {initial_answer}
+
+JSON:

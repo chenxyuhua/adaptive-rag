@@ -39,7 +39,7 @@ Outputs land in `runs/{dataset}/{strategy}/{run_id}/predictions.jsonl`.
 
 - `no_retrieval` — base LLM answers without external evidence
 - `fixed_k` — top-k retrieval for every query (the standard RAG baseline)
-- `adaptive` — stub; the adaptive policy plugs in here
+- `adaptive` — prompt / heuristic / learned linear / blended deciders, optional reflection, threshold sweeps, and counterfactual usefulness labels in `decision` (see `configs/default.yaml` → `adaptive` and `python scripts/run_baseline.py --help`)
 
 ## Standard prediction record (for downstream evaluation)
 
@@ -47,15 +47,36 @@ Every run writes one JSONL line per query with this schema. Evaluation/analysis 
 
 ```json
 {
-  "qid": "...", "dataset": "nq", "question": "...",
+  "qid": "...",
+  "dataset": "nq",
+  "question": "...",
   "gold_answers": ["..."],
-  "strategy": "fixed_k", "strategy_config": {"k": 5},
+  "strategy": "fixed_k",
+  "strategy_config": {"k": 5},
   "retrieved": [{"doc_id": "...", "score": 0.83, "text": "...", "source": "wiki"}],
-  "prompt": "...", "raw_answer": "...", "parsed_answer": "...",
-  "latency_ms": 412, "prompt_tokens": 1024, "completion_tokens": 18,
-  "retrieval_calls": 1, "retrieved_token_count": 950,
-  "model": "gemini-2.0-flash", "config_hash": "abc123",
-  "timestamp": "2026-04-29T12:34:56Z"
+  "prompt": "...",
+  "raw_answer": "...",
+  "parsed_answer": "...",
+  "latency_ms": 412,
+  "prompt_tokens": 1024,
+  "completion_tokens": 18,
+  "retrieval_calls": 1,
+  "retrieved_token_count": 950,
+  "model": "gemini-2.0-flash",
+  "config_hash": "abc123",
+  "timestamp": "2026-04-29T12:34:56Z",
+  "decision": {
+    "decide_retrieve": true,
+    "score": 0.82,
+    "threshold": 0.5,
+    "counterfactual": {
+      "no_retrieval_answer": "...",
+      "with_retrieval_answer": "...",
+      "retrieval_useful_prob": 0.71,
+      "retrieval_useful_label": "useful",
+      "judge": "heuristic"
+    }
+  }
 }
 ```
 

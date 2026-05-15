@@ -9,8 +9,8 @@ python scripts/run_baseline.py --dataset nq --strategy no_retrieval --n 50
 # Fixed-k=5 retrieval over TriviaQA
 python scripts/run_baseline.py --dataset triviaqa --strategy fixed_k --k 5 --n 50
 
-# Adaptive (uses default RetrievalDecider stub until policy is wired in)
-python scripts/run_baseline.py --dataset nq --strategy adaptive --n 50
+# Adaptive (prompt decider + threshold; add --reflection for critique loop)
+python scripts/run_baseline.py --dataset nq --strategy adaptive --n 50 --decision-threshold 0.5
 """
 
 from __future__ import annotations
@@ -33,6 +33,7 @@ from adaptive_rag.eval.loader import iter_predictions  # noqa: E402
 from adaptive_rag.llm import build_llm  # noqa: E402
 from adaptive_rag.pipeline import run as run_pipeline  # noqa: E402
 from adaptive_rag.retriever import build_retriever  # noqa: E402
+from adaptive_rag.decision import build_decider, maybe_wrap_reflection  # noqa: E402
 from adaptive_rag.strategies import (  # noqa: E402
     AdaptiveStrategy,
     FixedKRetrievalStrategy,
@@ -64,6 +65,30 @@ def main():
     p.add_argument("--n", type=int, default=None, help="Sample size; default = config dev_sample_size")
     p.add_argument("--seed", type=int, default=None)
     p.add_argument("--output-root", default=None)
+    # Adaptive-only overrides (see configs/default.yaml adaptive.*)
+    p.add_argument(
+        "--adaptive-decider",
+        default=None,
+        help="Decider kind: always, never, heuristic, prompt, blended, linear_classifier",
+    )
+    p.add_argument("--decision-threshold", type=float, default=None)
+    p.add_argument(
+        "--use-decider-hint-only",
+        action="store_true",
+        help="Ignore continuous threshold; use the model's boolean need_retrieval hint only.",
+    )
+    p.add_argument("--reflection", action="store_true", help="Enable self-reflection / critique step.")
+    p.add_argument(
+        "--shadow-retrieval-for-log",
+        action="store_true",
+        help="When skipping retrieval, still run a shadow RAG pass for counterfactual logging only.",
+    )
+    p.add_argument(
+        "--counterfactual-judge",
+        default=None,
+        choices=["heuristic", "llm", "none"],
+        help="How to label retrieval usefulness when both answers exist.",
+    )
     args = p.parse_args()
 
     load_dotenv(_REPO / ".env")
@@ -108,12 +133,54 @@ def main():
             llm=llm, retriever=retriever, prompt_template=with_prompt, k=args.k
         )
     else:
+        ad_cfg = cfg.get("adaptive") or {}
+        dec_kind = args.adaptive_decider or ad_cfg.get("decider_kind", "prompt")
+        dec_sub = dict(ad_cfg.get("decider") or {})
+        if "prompt_path" not in dec_sub and dec_kind == "prompt":
+            dec_sub["prompt_path"] = (cfg.get("prompts") or {}).get(
+                "retrieve_decision", "prompts/retrieve_decision.txt"
+            )
+        decider = build_decider(dec_kind, llm, repo_root=_REPO, cfg=dec_sub)
+        reflect_on = args.reflection or bool(ad_cfg.get("enable_reflection"))
+        refl_sub = dict(ad_cfg.get("reflection") or {})
+        if "prompt_path" not in refl_sub:
+            refl_sub["prompt_path"] = (cfg.get("prompts") or {}).get(
+                "reflect_critique", "prompts/reflect_critique.txt"
+            )
+        decider = maybe_wrap_reflection(
+            decider,
+            llm,
+            repo_root=_REPO,
+            enabled=reflect_on,
+            cfg=refl_sub,
+        )
+        thr = args.decision_threshold
+        if thr is None:
+            thr = float(ad_cfg.get("decision_threshold", 0.5))
+        if args.use_decider_hint_only:
+            apply_thr = False
+        else:
+            apply_thr = bool(ad_cfg.get("apply_decision_threshold", True))
+
+        shadow = args.shadow_retrieval_for_log or bool(ad_cfg.get("shadow_retrieval_for_log"))
+        cf_judge = args.counterfactual_judge or ad_cfg.get("counterfactual_judge", "heuristic")
+        cf_prompt = ad_cfg.get("counterfactual_prompt_path") or (cfg.get("prompts") or {}).get(
+            "retrieval_useful_judge", "prompts/retrieval_useful_judge.txt"
+        )
+
         strategy = AdaptiveStrategy(
             llm=llm,
             retriever=retriever,
             prompt_template_no_retrieval=no_prompt,
             prompt_template_with_retrieval=with_prompt,
+            decider=decider,
             k=args.k,
+            decision_threshold=thr,
+            apply_decision_threshold=apply_thr,
+            shadow_retrieval_for_log=shadow,
+            counterfactual_judge=cf_judge,
+            counterfactual_prompt_path=cf_prompt,
+            repo_root=_REPO,
         )
 
     # Run

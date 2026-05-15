@@ -1,0 +1,15 @@
+You critique a short factual answer. Documents may or may not have been used.
+
+Question: {question}
+Current answer: {answer}
+Were documents used in the prompt? {has_documents}
+
+Return ONLY a JSON object with keys:
+- "satisfied": boolean (true if the answer is adequately supported and specific)
+- "need_external_evidence": boolean (true ONLY if documents were NOT used and the answer needs external evidence)
+- "action": one of "none" or "revise"
+- "revised_answer": string (required only if action is "revise" — a better standalone answer)
+
+If need_external_evidence is true, set action to "none" and omit revised_answer.
+
+JSON:
